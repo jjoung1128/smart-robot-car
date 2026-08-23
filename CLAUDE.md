@@ -99,6 +99,16 @@ Yaw calibration (`MPU6050_calibration`) runs at init and again from `Application
 
 The documentation of record for this protocol is ELEGOO's "Communication protocol for Smart Robot Car.pdf", which is not in this repo.
 
+`tools/serial_check.py` exercises the `N:21` / `N:22` query replies against a connected car and validates the values are in range. Stdlib only — it configures the tty with `stty` and reads the device file, so it needs no pyserial. `--watch` polls continuously for checking that readings track physical reality. `tools/test_serial_check.py` covers it against a simulated car over a pty, so it runs with no hardware attached:
+
+```bash
+python3 tools/test_serial_check.py     # no car needed
+python3 tools/serial_check.py          # against a real car
+python3 tools/serial_check.py --watch
+```
+
+Note that `N:22` leaves `Functional_Mode` in `CMD_Programming_mode`; the script sends `N:100` afterward to restore standby.
+
 ## Conventions
 
 - The `_xxx0` / `_xxx` suffixes are the vendor's naming, not a placeholder to fix.
