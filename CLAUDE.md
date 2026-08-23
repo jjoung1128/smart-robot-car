@@ -15,6 +15,7 @@ There is no build script, test suite, or linter in this repo. It is built by the
 Two gotchas before any compile:
 - The Arduino toolchain requires the sketch folder to contain an `.ino` matching the folder name. This repo's folder is `smart-robot-car`, so `arduino-cli compile .` fails with `main file missing from sketch: .../smart-robot-car.ino`. Pointing at the `.ino` directly does **not** help — arduino-cli resolves it back to the parent folder and fails the same way. You must build from a copy or symlink tree in a directory named `SmartRobotCarV4.0_V1_20230201`.
 - `.vscode/arduino.json` is stale: it names `SmartRobotCarV4.0_V1_20201229.ino` (a file that no longer exists) and a Windows `COM13` port. On macOS the port is typically `/dev/cu.usbserial-*` or `/dev/cu.usbmodem*`.
+- **Unplug the ESP32-WROVER camera module before uploading.** It is wired to the Uno's UART by design (the phone app path is app → WiFi → ESP32 → serial → Uno), so it holds the same RX line the USB adapter needs. With it attached, `avrdude` reports `not in sync: resp=0x00` ten times and serial writes are silently dropped — while *reads* keep working fine, so boot chatter still appears and the port looks healthy. A one-directional failure like that is the signature of this problem, not a bad cable: USB carries both directions on one differential pair, so a cable fault cannot be direction-asymmetric.
 
 Verified working recipe (arduino-cli 1.5.1, core `arduino:avr` 1.8.8):
 
@@ -33,7 +34,21 @@ Serial is 9600 baud (`ApplicationFunctionSet_Init`).
 
 ### Flash is nearly full
 
-A clean build is **30990 / 32256 bytes of flash (96%)** and 1169 / 2048 bytes of RAM (57%). There are roughly 1.2 KB of program space left. Any non-trivial feature addition will overflow the Uno, so check the size line on every compile; the compile-time debug gates (`_is_print`, `_Test_print`, `_Test_DeviceDriverSet`) are the usual place to buy space back.
+A clean build is **29970 / 32256 bytes of flash (93%)** and 1165 / 2048 bytes of RAM (57%). There are roughly 2.3 KB of program space left. Any non-trivial feature addition can overflow the Uno, so check the size line on every compile; the compile-time debug gates (`_is_print`, `_Test_print`, `_Test_DeviceDriverSet`) are the usual place to buy space back (`_is_print 0` is worth ~600 bytes).
+
+**Do not use `sprintf`/`printf` here.** A single `sprintf` links AVR's `vfprintf`, which costs ~950 bytes for float and width-specifier support this firmware never uses. Reintroducing one costs about 4% of total program space. Integer formatting for the serial replies uses `String(value)` inside the existing concatenation instead; `itoa(value, buf, 10)` is 186 bytes cheaper still if space ever gets tight again.
+
+There is no C++ standard library on this target — the AVR toolchain ships no libstdc++, so `<format>`, `<string>`, `<vector>`, and `<cstdio>` are all absent, and the core builds with `-std=gnu++11 -fno-exceptions` on avr-g++ 7.3.0. Arduino's `String` and the vendored header-only libraries are what's available; `std::` anything is not.
+
+Measuring where flash went, when you need to:
+
+```bash
+ELF=$(find ~/Library/Caches/arduino/sketches -name '*.ino.elf' | head -1)
+NM=$(find ~/Library/Arduino15/packages -name avr-nm -type f | head -1)
+"$NM" --size-sort -S -C "$ELF" | tail -20
+```
+
+Note that `main` shows up at ~8 KB because `loop()` inlines every mode handler into it, so per-function attribution above it is misleading.
 
 ### Library situation
 
@@ -79,11 +94,27 @@ Non-blocking timing is done throughout with `static unsigned long` + `millis()` 
 
 Yaw calibration (`MPU6050_calibration`) runs at init and again from `ApplicationFunctionSet_Standby` once the ITR20001 sensors have reported the car on the ground for ~10 consecutive samples — `Car_LeaveTheGround` also forces a yaw-reference reset in the linear control loop.
 
+### ITR20001 polarity, and an inverted flag
+
+Measured on a working V4.0 car: the ITR20001 channels read **~40 on a surface** and **~1000 held in the air**, i.e. the value *rises* as reflected IR falls. That makes `TrackingDetection_V = 950` an *airborne* threshold, and the `TrackingDetection_S = 250` / `_E = 850` window a mid-reflectance band — the dark line, not the bright floor.
+
+Consequently **`Car_LeaveTheGround` is named backwards**: `ApplicationFunctionSet_SmartRobotCarLeaveTheGround` sets it `false` when all three channels exceed 950, which is when the car *is* off the ground. Every consumer compensates, so the observable behavior is correct — `Standby` calibrates while the car sits still on a surface, the linear control loop holds its yaw reference while driving and resets it only when lifted, and `N:23` inverts once more so it answers `true` when the car really is airborne. Read any `Car_LeaveTheGround` comparison as "is on the ground" and it will make sense; take the name at face value and you will invert every one of them.
+
 ### Serial command protocol
 
 `ApplicationFunctionSet_SerialPortDataAnalysis` accumulates bytes until `}`, then parses with ArduinoJson (`StaticJsonDocument<200>`). Frames look like `{"H":"<serial no>","N":<cmd>,"D1":..,"D2":..,"T":..}`. `N` selects the command; the `switch` on `control_mode_N` in that function is the authoritative list (1–8 motion/servo/lighting, 21–23 sensor queries, 100/101/102/105/106/110 mode and app control). Replies are `{<H>_ok}`, `{<H>_<value>}`, or bare `{ok}`, gated on `#define _is_print 1`. Handler bodies live in the `CMD_*_xxx0` methods; note the overload pattern — the no-arg overload is the loop-driven one that reads the `CMD_is_*` member fields, the parameterized overload does the work.
 
 The documentation of record for this protocol is ELEGOO's "Communication protocol for Smart Robot Car.pdf", which is not in this repo.
+
+`tools/serial_check.py` exercises the `N:21` / `N:22` query replies against a connected car and validates the values are in range. Stdlib only — it configures the tty with `stty` and reads the device file, so it needs no pyserial. `--watch` polls continuously for checking that readings track physical reality. `tools/test_serial_check.py` covers it against a simulated car over a pty, so it runs with no hardware attached:
+
+```bash
+python3 tools/test_serial_check.py     # no car needed
+python3 tools/serial_check.py          # against a real car
+python3 tools/serial_check.py --watch
+```
+
+Note that `N:22` leaves `Functional_Mode` in `CMD_Programming_mode`; the script sends `N:100` afterward to restore standby.
 
 ## Conventions
 
