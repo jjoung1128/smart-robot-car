@@ -33,7 +33,19 @@ Serial is 9600 baud (`ApplicationFunctionSet_Init`).
 
 ### Flash is nearly full
 
-A clean build is **30990 / 32256 bytes of flash (96%)** and 1169 / 2048 bytes of RAM (57%). There are roughly 1.2 KB of program space left. Any non-trivial feature addition will overflow the Uno, so check the size line on every compile; the compile-time debug gates (`_is_print`, `_Test_print`, `_Test_DeviceDriverSet`) are the usual place to buy space back.
+A clean build is **29784 / 32256 bytes of flash (92%)** and 1165 / 2048 bytes of RAM (57%). There are roughly 2.4 KB of program space left. Any non-trivial feature addition can overflow the Uno, so check the size line on every compile; the compile-time debug gates (`_is_print`, `_Test_print`, `_Test_DeviceDriverSet`) are the usual place to buy space back (`_is_print 0` is worth ~600 bytes).
+
+**Do not use `sprintf`/`printf` here.** A single `sprintf` links AVR's `vfprintf`, which costs ~950 bytes for float and width-specifier support this firmware never uses. Integer formatting for the serial replies goes through `itoa(value, buf, 10)` instead. Reintroducing one `sprintf` call costs about 4% of total program space.
+
+Measuring where flash went, when you need to:
+
+```bash
+ELF=$(find ~/Library/Caches/arduino/sketches -name '*.ino.elf' | head -1)
+NM=$(find ~/Library/Arduino15/packages -name avr-nm -type f | head -1)
+"$NM" --size-sort -S -C "$ELF" | tail -20
+```
+
+Note that `main` shows up at ~8 KB because `loop()` inlines every mode handler into it, so per-function attribution above it is misleading.
 
 ### Library situation
 
