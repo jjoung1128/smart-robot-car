@@ -567,20 +567,21 @@ void ApplicationFunctionSet::ApplicationFunctionSet_Tracking(void)
       return;
     }
 
-    // int getAnaloguexxx_L = AppITR20001.DeviceDriverSet_ITR20001_getAnaloguexxx_L();
-    // int getAnaloguexxx_M = AppITR20001.DeviceDriverSet_ITR20001_getAnaloguexxx_M();
-    // int getAnaloguexxx_R = AppITR20001.DeviceDriverSet_ITR20001_getAnaloguexxx_R();
 #if _Test_print
+    /*ApplicationFunctionSet_SensorDataUpdate refreshes TrackingData_L/M/R every
+      loop, so print those rather than re-reading the ADC here.*/
     static unsigned long print_time = 0;
     if (millis() - print_time > 500)
     {
       print_time = millis();
       Serial.print("ITR20001_getAnaloguexxx_L=");
-      Serial.println(getAnaloguexxx_L);
+      Serial.println(TrackingData_L);
       Serial.print("ITR20001_getAnaloguexxx_M=");
-      Serial.println(getAnaloguexxx_M);
+      Serial.println(TrackingData_M);
       Serial.print("ITR20001_getAnaloguexxx_R=");
-      Serial.println(getAnaloguexxx_R);
+      Serial.println(TrackingData_R);
+      Serial.print("TrackingDetection_S=");
+      Serial.println(TrackingDetection_S);
     }
 #endif
     if (function_xxx(TrackingData_M, TrackingDetection_S, TrackingDetection_E))
