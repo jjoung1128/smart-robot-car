@@ -13,28 +13,38 @@ Hardware (per `README.txt`): Uno MCU, HC-SR04 ultrasonic, LTI-PCB/ITR20001 line-
 There is no build script, test suite, or linter in this repo. It is built by the Arduino toolchain.
 
 Two gotchas before any compile:
-- The Arduino toolchain requires the sketch folder name to match the `.ino` basename. This repo's folder is `smart-robot-car`, so build from a copy/symlink in a directory named `SmartRobotCarV4.0_V1_20230201`, or pass the `.ino` path explicitly.
+- The Arduino toolchain requires the sketch folder to contain an `.ino` matching the folder name. This repo's folder is `smart-robot-car`, so `arduino-cli compile .` fails with `main file missing from sketch: .../smart-robot-car.ino`. Pointing at the `.ino` directly does **not** help — arduino-cli resolves it back to the parent folder and fails the same way. You must build from a copy or symlink tree in a directory named `SmartRobotCarV4.0_V1_20230201`.
 - `.vscode/arduino.json` is stale: it names `SmartRobotCarV4.0_V1_20201229.ino` (a file that no longer exists) and a Windows `COM13` port. On macOS the port is typically `/dev/cu.usbserial-*` or `/dev/cu.usbmodem*`.
 
-With `arduino-cli` (not currently installed on this machine):
+Verified working recipe (arduino-cli 1.5.1, core `arduino:avr` 1.8.8):
 
 ```bash
 arduino-cli core install arduino:avr
-arduino-cli lib install FastLED                    # only external lib actually needed
-arduino-cli compile --fqbn arduino:avr:uno .
-arduino-cli upload  --fqbn arduino:avr:uno -p /dev/cu.usbserial-XXXX .
+arduino-cli lib install FastLED@3.2.10 Servo     # version pin matters — see below
+
+BUILD=/tmp/SmartRobotCarV4.0_V1_20230201         # folder name must match the .ino
+mkdir -p "$BUILD" && cp *.ino *.h *.cpp "$BUILD"/
+arduino-cli compile --fqbn arduino:avr:uno "$BUILD"
+arduino-cli upload  --fqbn arduino:avr:uno -p /dev/cu.usbserial-XXXX "$BUILD"
 arduino-cli monitor -p /dev/cu.usbserial-XXXX -c baudrate=9600
 ```
 
 Serial is 9600 baud (`ApplicationFunctionSet_Init`).
 
+### Flash is nearly full
+
+A clean build is **30990 / 32256 bytes of flash (96%)** and 1169 / 2048 bytes of RAM (57%). There are roughly 1.2 KB of program space left. Any non-trivial feature addition will overflow the Uno, so check the size line on every compile; the compile-time debug gates (`_is_print`, `_Test_print`, `_Test_DeviceDriverSet`) are the usual place to buy space back.
+
 ### Library situation
 
-`addLibrary/` holds zipped copies of FastLED, IRremote, NewPing, and pitches for install via the Arduino IDE. But:
-- **IRremote is vendored** into the repo root (`IRremote.cpp/.h`, `IRremoteInt.h`). Installing the `addLibrary/IRremote.zip` copy as a global library will produce duplicate-symbol/ambiguous-include errors. Prefer the vendored copy.
+`addLibrary/` holds zipped copies of FastLED, IRremote, NewPing, and pitches for install via the Arduino IDE. What actually resolves at compile time:
+
+- **FastLED must be pinned to 3.2.10** — the version in `addLibrary/FastLED-master.zip`. Modern FastLED (3.10.5) fails to link: `multiple definition of __vector_11`, because it claims the TIMER1 vector that `Servo` also needs. `arduino-cli lib install FastLED` unpinned installs the broken version.
+- **Servo is required** and is *not* bundled with the AVR core — without it the build dies at `DeviceDriverSet_xxx0.h:140: Servo.h: No such file or directory`.
+- **Wire** is pulled in transitively (by the vendored I2Cdev/MPU6050) but ships with the core, so it needs no install.
+- Those three — FastLED, Servo, Wire — are the only libraries resolved from outside the sketch folder.
+- **IRremote, MPU6050, I2Cdev, and ArduinoJson v6.11.1 are vendored** in the repo root. The vendored headers win over same-named global libraries, so a globally installed IRremote (e.g. 4.7.1) sits there unused rather than causing a conflict — but keep edits in the vendored copies, since those are what compile.
 - **NewPing is unused** — the ultrasonic driver hand-rolls `pulseIn`; the `NewPing` include is commented out.
-- **MPU6050 / I2Cdev / ArduinoJson v6.11.1** are also vendored in the root.
-- **FastLED and Servo** are the only libraries resolved from outside the sketch folder.
 
 ## Architecture
 
