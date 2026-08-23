@@ -15,6 +15,7 @@ There is no build script, test suite, or linter in this repo. It is built by the
 Two gotchas before any compile:
 - The Arduino toolchain requires the sketch folder to contain an `.ino` matching the folder name. This repo's folder is `smart-robot-car`, so `arduino-cli compile .` fails with `main file missing from sketch: .../smart-robot-car.ino`. Pointing at the `.ino` directly does **not** help — arduino-cli resolves it back to the parent folder and fails the same way. You must build from a copy or symlink tree in a directory named `SmartRobotCarV4.0_V1_20230201`.
 - `.vscode/arduino.json` is stale: it names `SmartRobotCarV4.0_V1_20201229.ino` (a file that no longer exists) and a Windows `COM13` port. On macOS the port is typically `/dev/cu.usbserial-*` or `/dev/cu.usbmodem*`.
+- **Unplug the ESP32-WROVER camera module before uploading.** It is wired to the Uno's UART by design (the phone app path is app → WiFi → ESP32 → serial → Uno), so it holds the same RX line the USB adapter needs. With it attached, `avrdude` reports `not in sync: resp=0x00` ten times and serial writes are silently dropped — while *reads* keep working fine, so boot chatter still appears and the port looks healthy. A one-directional failure like that is the signature of this problem, not a bad cable: USB carries both directions on one differential pair, so a cable fault cannot be direction-asymmetric.
 
 Verified working recipe (arduino-cli 1.5.1, core `arduino:avr` 1.8.8):
 
