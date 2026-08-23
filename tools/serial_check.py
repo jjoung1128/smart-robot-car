@@ -191,9 +191,10 @@ def cmd_check(fd, args):
 
 def cmd_watch(fd, args):
     print(f"port {args.port} @ {BAUD} baud -- Ctrl-C to stop\n")
-    print("  Move a hand toward the ultrasonic head; lift the car off the "
-          "ground.\n  Values should track what you do. All three tracking "
-          "channels read\n  >950 when the car is sitting on a surface.\n")
+    print("  Move a hand toward the ultrasonic head; lift the car off the ground.\n"
+          "  Values should track what you do. Measured on a V4.0 car: the\n"
+          "  tracking channels read ~40 sitting on a surface and ~1000 held in\n"
+          "  the air, so they rise as the surface recedes.\n")
     print(f"  {'distance':>10}  {'left':>6}  {'middle':>6}  {'right':>6}")
     probes = [("N", 21, "D1", 2), ("N", 22, "D1", 0), ("N", 22, "D1", 1), ("N", 22, "D1", 2)]
     try:

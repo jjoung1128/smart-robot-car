@@ -94,6 +94,12 @@ Non-blocking timing is done throughout with `static unsigned long` + `millis()` 
 
 Yaw calibration (`MPU6050_calibration`) runs at init and again from `ApplicationFunctionSet_Standby` once the ITR20001 sensors have reported the car on the ground for ~10 consecutive samples — `Car_LeaveTheGround` also forces a yaw-reference reset in the linear control loop.
 
+### ITR20001 polarity, and an inverted flag
+
+Measured on a working V4.0 car: the ITR20001 channels read **~40 on a surface** and **~1000 held in the air**, i.e. the value *rises* as reflected IR falls. That makes `TrackingDetection_V = 950` an *airborne* threshold, and the `TrackingDetection_S = 250` / `_E = 850` window a mid-reflectance band — the dark line, not the bright floor.
+
+Consequently **`Car_LeaveTheGround` is named backwards**: `ApplicationFunctionSet_SmartRobotCarLeaveTheGround` sets it `false` when all three channels exceed 950, which is when the car *is* off the ground. Every consumer compensates, so the observable behavior is correct — `Standby` calibrates while the car sits still on a surface, the linear control loop holds its yaw reference while driving and resets it only when lifted, and `N:23` inverts once more so it answers `true` when the car really is airborne. Read any `Car_LeaveTheGround` comparison as "is on the ground" and it will make sense; take the name at face value and you will invert every one of them.
+
 ### Serial command protocol
 
 `ApplicationFunctionSet_SerialPortDataAnalysis` accumulates bytes until `}`, then parses with ArduinoJson (`StaticJsonDocument<200>`). Frames look like `{"H":"<serial no>","N":<cmd>,"D1":..,"D2":..,"T":..}`. `N` selects the command; the `switch` on `control_mode_N` in that function is the authoritative list (1–8 motion/servo/lighting, 21–23 sensor queries, 100/101/102/105/106/110 mode and app control). Replies are `{<H>_ok}`, `{<H>_<value>}`, or bare `{ok}`, gated on `#define _is_print 1`. Handler bodies live in the `CMD_*_xxx0` methods; note the overload pattern — the no-arg overload is the loop-driven one that reads the `CMD_is_*` member fields, the parameterized overload does the work.
