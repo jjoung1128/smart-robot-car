@@ -33,9 +33,11 @@ Serial is 9600 baud (`ApplicationFunctionSet_Init`).
 
 ### Flash is nearly full
 
-A clean build is **29784 / 32256 bytes of flash (92%)** and 1165 / 2048 bytes of RAM (57%). There are roughly 2.4 KB of program space left. Any non-trivial feature addition can overflow the Uno, so check the size line on every compile; the compile-time debug gates (`_is_print`, `_Test_print`, `_Test_DeviceDriverSet`) are the usual place to buy space back (`_is_print 0` is worth ~600 bytes).
+A clean build is **29970 / 32256 bytes of flash (93%)** and 1165 / 2048 bytes of RAM (57%). There are roughly 2.3 KB of program space left. Any non-trivial feature addition can overflow the Uno, so check the size line on every compile; the compile-time debug gates (`_is_print`, `_Test_print`, `_Test_DeviceDriverSet`) are the usual place to buy space back (`_is_print 0` is worth ~600 bytes).
 
-**Do not use `sprintf`/`printf` here.** A single `sprintf` links AVR's `vfprintf`, which costs ~950 bytes for float and width-specifier support this firmware never uses. Integer formatting for the serial replies goes through `itoa(value, buf, 10)` instead. Reintroducing one `sprintf` call costs about 4% of total program space.
+**Do not use `sprintf`/`printf` here.** A single `sprintf` links AVR's `vfprintf`, which costs ~950 bytes for float and width-specifier support this firmware never uses. Reintroducing one costs about 4% of total program space. Integer formatting for the serial replies uses `String(value)` inside the existing concatenation instead; `itoa(value, buf, 10)` is 186 bytes cheaper still if space ever gets tight again.
+
+There is no C++ standard library on this target — the AVR toolchain ships no libstdc++, so `<format>`, `<string>`, `<vector>`, and `<cstdio>` are all absent, and the core builds with `-std=gnu++11 -fno-exceptions` on avr-g++ 7.3.0. Arduino's `String` and the vendored header-only libraries are what's available; `std::` anything is not.
 
 Measuring where flash went, when you need to:
 

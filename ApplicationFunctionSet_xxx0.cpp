@@ -1535,10 +1535,8 @@ void ApplicationFunctionSet::CMD_UltrasoundModuleStatus_xxx0(uint8_t is_get)
   }
   else if (2 == is_get) //ultrasonic sensor is_get data
   {
-    char toString[10];
-    itoa(UltrasoundData_cm, toString, 10);
 #if _is_print
-    Serial.print('{' + CommandSerialNumber + '_' + toString + '}');
+    Serial.print('{' + CommandSerialNumber + '_' + String(UltrasoundData_cm) + '}');
 #endif
   }
 }
@@ -1549,12 +1547,10 @@ void ApplicationFunctionSet::CMD_UltrasoundModuleStatus_xxx0(uint8_t is_get)
 */
 void ApplicationFunctionSet::CMD_TraceModuleStatus_xxx0(uint8_t is_get)
 {
-  char toString[10];
   if (0 == is_get) /*Get left IR sensor status*/
   {
-    itoa(TrackingData_L, toString, 10);
 #if _is_print
-    Serial.print('{' + CommandSerialNumber + '_' + toString + '}');
+    Serial.print('{' + CommandSerialNumber + '_' + String(TrackingData_L) + '}');
 #endif
     /*
     if (true == TrackingDetectionStatus_L)
@@ -1572,9 +1568,8 @@ void ApplicationFunctionSet::CMD_TraceModuleStatus_xxx0(uint8_t is_get)
   }
   else if (1 == is_get) /*Get middle IR sensor status*/
   {
-    itoa(TrackingData_M, toString, 10);
 #if _is_print
-    Serial.print('{' + CommandSerialNumber + '_' + toString + '}');
+    Serial.print('{' + CommandSerialNumber + '_' + String(TrackingData_M) + '}');
 #endif
     /*
     if (true == TrackingDetectionStatus_M)
@@ -1592,9 +1587,8 @@ void ApplicationFunctionSet::CMD_TraceModuleStatus_xxx0(uint8_t is_get)
   }
   else if (2 == is_get) /*Get right IR sensor status*/
   {
-    itoa(TrackingData_R, toString, 10);
 #if _is_print
-    Serial.print('{' + CommandSerialNumber + '_' + toString + '}');
+    Serial.print('{' + CommandSerialNumber + '_' + String(TrackingData_R) + '}');
 #endif
     /*
         if (true == TrackingDetectionStatus_R)
