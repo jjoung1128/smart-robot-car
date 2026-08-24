@@ -4,6 +4,9 @@ Arduino sketch for the ELEGOO Smart Robot Car V4.0 (Uno / ATmega328P), based on
 ELEGOO's `SmartRobotCarV4.0_V1_20230201` release with a small number of fixes on
 top. See [Changes from the ELEGOO original](#changes-from-the-elegoo-original).
 
+- **Product page:** [ELEGOO Smart Robot Car Kit V4.0](https://us.elegoo.com/products/elegoo-smart-robot-car-kit-v-4-0)
+- **Official tutorial, manual, app and datasheets:** [ELEGOO's V4.0 tutorial page](https://us.elegoo.com/blogs/arduino-projects/elegoo-smart-robot-car-kit-v4-0-tutorial)
+
 `README.txt` is the vendor's original changelog and is left as-is.
 [`CLAUDE.md`](CLAUDE.md) has the deeper architecture notes — the mode state
 machine, the driver layer, the serial protocol, and the sensor quirks.
@@ -195,8 +198,10 @@ ArduinoJson-v6.11.1.h               vendored, do not hand-edit
 MPU6050.*  I2Cdev.*  IRremote*      vendored, do not hand-edit
 addLibrary/                         zipped libraries for Arduino IDE install
 tools/                              serial verification scripts
+licenses/                           third-party license texts
 README.txt                          ELEGOO's original changelog
 CLAUDE.md                           architecture and gotcha notes
+NOTICE.md                           provenance and per-component licensing
 ```
 
 There is no build script, test suite, or linter for the firmware itself.
@@ -213,11 +218,19 @@ There is no build script, test suite, or linter for the firmware itself.
 - Documented the ITR20001 polarity, the inverted `Car_LeaveTheGround` flag, the
   camera-module upload conflict, and the flash budget in `CLAUDE.md`.
 
-## Provenance
+## Provenance and licensing
 
-The firmware and the vendored libraries are ELEGOO's, redistributed here with
-fixes; ELEGOO publishes them without a license file, so this repo has none
-either and the terms are whatever ELEGOO's own distribution implies. Treat it as
-a hardware-support dump rather than something you can relicense. The vendored
-third-party libraries (ArduinoJson, MPU6050, I2Cdev, IRremote, FastLED) carry
-their own upstream licenses.
+Short version: **[`NOTICE.md`](NOTICE.md) has the per-component breakdown.**
+
+The firmware is ELEGOO's, published from their
+[tutorial page](https://us.elegoo.com/blogs/arduino-projects/elegoo-smart-robot-car-kit-v4-0-tutorial)
+as support material for the kit, with no license file and no notice in any
+source file. Public availability isn't a license, so the status of those files
+is unsettled and a fork can't settle it — which is why there's no repo-wide
+`LICENSE` here. Don't treat the ELEGOO-authored code as open source.
+
+The bundled third-party libraries *are* clearly licensed, and their terms do
+grant redistribution: ArduinoJson and I2Cdevlib under MIT, IRremote under
+LGPL 2.1. ELEGOO's distribution stripped some of those notices; they're restored
+under [`licenses/`](licenses). Everything added by this repo — `tools/`, the
+docs, and the diffs against ELEGOO's release — is MIT.
