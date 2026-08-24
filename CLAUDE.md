@@ -12,6 +12,8 @@ Hardware (per `README.txt`): Uno MCU, HC-SR04 ultrasonic, LTI-PCB/ITR20001 line-
 
 There is no build script, test suite, or linter in this repo. It is built by the Arduino toolchain.
 
+`README.md` carries the same recipe in human-facing form. If you change the build or flash procedure, change it in both places.
+
 Two gotchas before any compile:
 - The Arduino toolchain requires the sketch folder to contain an `.ino` matching the folder name. This repo's folder is `smart-robot-car`, so `arduino-cli compile .` fails with `main file missing from sketch: .../smart-robot-car.ino`. Pointing at the `.ino` directly does **not** help — arduino-cli resolves it back to the parent folder and fails the same way. You must build from a copy or symlink tree in a directory named `SmartRobotCarV4.0_V1_20230201`.
 - `.vscode/arduino.json` is stale: it names `SmartRobotCarV4.0_V1_20201229.ino` (a file that no longer exists) and a Windows `COM13` port. On macOS the port is typically `/dev/cu.usbserial-*` or `/dev/cu.usbmodem*`.
