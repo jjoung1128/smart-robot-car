@@ -81,7 +81,7 @@ public:
   uint8_t Rocker_temp;
 
 public:
-  uint8_t TrackingDetection_S = 250;
+  uint16_t TrackingDetection_S = 250; //uint16_t: the IR remote raises this to 600, which overflows a uint8_t
   uint16_t TrackingDetection_E = 850;
   uint16_t TrackingDetection_V = 950;
 
