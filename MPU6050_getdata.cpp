@@ -30,7 +30,7 @@ bool MPU6050_getdata::MPU6050_dveInit(void)
 {
   Wire.begin();
   uint8_t chip_id = 0x00;
-  uint8_t cout;
+  uint8_t cout = 0;
   do
   {
     chip_id = accelgyro.getDeviceID();
