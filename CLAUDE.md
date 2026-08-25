@@ -60,6 +60,23 @@ NM=$(find ~/Library/Arduino15/packages -name avr-nm -type f | head -1)
 
 Note that `main` shows up at ~8 KB because `loop()` inlines every mode handler into it, so per-function attribution above it is misleading.
 
+### Checking for warnings arduino-cli hides
+
+`arduino-cli compile` passes `-w` (all warnings off) and `-flto`, and LTO defers codegen to link time, which suppresses flow-sensitive warnings like `-Wmaybe-uninitialized` even if you turn warnings back on with `--build-property`. Neither `arduino-cli compile --clean .` nor `--build-property "compiler.cpp.extra_flags=-Wall -Wextra"` will show you an uninitialized-variable bug (this is how `uint8_t cout;` in `MPU6050_getdata.cpp` shipped unnoticed). To actually see them, compile the one file you care about directly, without `-flto`:
+
+```bash
+GXX=$(find ~/Library/Arduino15/packages -name avr-g++ -type f | head -1)
+CORE=$(find ~/Library/Arduino15/packages -path '*avr/1.8.8/cores/arduino' | head -1)
+VARIANT=$(find ~/Library/Arduino15/packages -path '*avr/1.8.8/variants/standard' | head -1)
+WIRE=$(find ~/Library/Arduino15/packages -path '*avr/1.8.8/libraries/Wire/src' | head -1)
+"$GXX" -c -g -Os -std=gnu++11 -fpermissive -fno-exceptions -mmcu=atmega328p \
+  -DF_CPU=16000000L -DARDUINO=10607 -DARDUINO_AVR_UNO -DARDUINO_ARCH_AVR \
+  -Wall -Wextra -Wuninitialized -Wmaybe-uninitialized \
+  -I"$CORE" -I"$VARIANT" -I"$WIRE" -I. MPU6050_getdata.cpp -o /tmp/out.o
+```
+
+This is a per-file static check, not a test — it needs no hardware and no `arduino-cli lib install`, but it also won't catch anything that only shows up across translation units at link time.
+
 ### Library situation
 
 `addLibrary/` holds zipped copies of FastLED, IRremote, NewPing, and pitches for install via the Arduino IDE. What actually resolves at compile time:
