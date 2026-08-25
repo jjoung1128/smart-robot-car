@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Firmware for the ELEGOO Smart Robot Car V4.0 (Arduino Uno / AVR). This is a single Arduino sketch: `SmartRobotCarV4.0_V1_20230201.ino` plus vendored libraries, all flat in the repo root. `SmartRobotCarV4.0_V1_20230201.hex` is a prebuilt artifact of that sketch, not a build input.
+Firmware for the ELEGOO Smart Robot Car V4.0 (Arduino Uno / AVR). This is a single Arduino sketch: `smart-robot-car.ino` plus vendored libraries, all flat in the repo root. `SmartRobotCarV4.0_V1_20230201.hex` is a prebuilt artifact of that sketch, not a build input — it keeps ELEGOO's release name, which is also what the `.ino` was called before it was renamed to match this folder.
 
 Hardware (per `README.txt`): Uno MCU, HC-SR04 ultrasonic, LTI-PCB/ITR20001 line-tracking, GY-521 (MPU6050) gyro, TB6612 motor driver, ESP32-WROVER camera module. There are two board revisions of this car; the V4.0 pin sets are active and the V3.0 ones are left commented out in `DeviceDriverSet_xxx0.h` — do not "clean up" those comments.
 
@@ -14,9 +14,9 @@ There is no build script, test suite, or linter in this repo. It is built by the
 
 `README.md` carries the same recipe in human-facing form. If you change the build or flash procedure, change it in both places.
 
-Two gotchas before any compile:
-- The Arduino toolchain requires the sketch folder to contain an `.ino` matching the folder name. This repo's folder is `smart-robot-car`, so `arduino-cli compile .` fails with `main file missing from sketch: .../smart-robot-car.ino`. Pointing at the `.ino` directly does **not** help — arduino-cli resolves it back to the parent folder and fails the same way. You must build from a copy or symlink tree in a directory named `SmartRobotCarV4.0_V1_20230201`.
-- `.vscode/arduino.json` is stale: it names `SmartRobotCarV4.0_V1_20201229.ino` (a file that no longer exists) and a Windows `COM13` port. On macOS the port is typically `/dev/cu.usbserial-*` or `/dev/cu.usbmodem*`.
+Gotchas before any compile:
+- **Do not rename `smart-robot-car.ino`.** The Arduino toolchain requires the sketch folder to contain an `.ino` matching the folder name, so the entry point is named after this directory deliberately — ELEGOO ships it as `SmartRobotCarV4.0_V1_20230201.ino`, and it was renamed so that `arduino-cli compile .` works in place. Break that pairing and the build fails with `main file missing from sketch: .../smart-robot-car.ino`; pointing at the `.ino` directly does **not** help, since arduino-cli resolves it back to the parent folder and fails the same way. The rename is cosmetic: the compiled `.hex` is byte-identical either way.
+- `.vscode/c_cpp_properties.json` is vendor cruft: it hardcodes Arduino paths under `C:\Users\Faynman\` from an ELEGOO developer's machine, so IntelliSense won't resolve for anyone else. It has no effect on the build. (`.vscode/arduino.json` used to be stale the same way and has been corrected; the bogus `COM13` port was dropped so the extension prompts instead.)
 - **Unplug the ESP32-WROVER camera module before uploading.** It is wired to the Uno's UART by design (the phone app path is app → WiFi → ESP32 → serial → Uno), so it holds the same RX line the USB adapter needs. With it attached, `avrdude` reports `not in sync: resp=0x00` ten times and serial writes are silently dropped — while *reads* keep working fine, so boot chatter still appears and the port looks healthy. A one-directional failure like that is the signature of this problem, not a bad cable: USB carries both directions on one differential pair, so a cable fault cannot be direction-asymmetric.
 
 Verified working recipe (arduino-cli 1.5.1, core `arduino:avr` 1.8.8):
@@ -25,12 +25,20 @@ Verified working recipe (arduino-cli 1.5.1, core `arduino:avr` 1.8.8):
 arduino-cli core install arduino:avr
 arduino-cli lib install FastLED@3.2.10 Servo     # version pin matters — see below
 
-BUILD=/tmp/SmartRobotCarV4.0_V1_20230201         # folder name must match the .ino
-mkdir -p "$BUILD" && cp *.ino *.h *.cpp "$BUILD"/
-arduino-cli compile --fqbn arduino:avr:uno "$BUILD"
-arduino-cli upload  --fqbn arduino:avr:uno -p /dev/cu.usbserial-XXXX "$BUILD"
+arduino-cli compile --fqbn arduino:avr:uno .     # from the repo root
+arduino-cli upload  --fqbn arduino:avr:uno -p /dev/cu.usbserial-XXXX .
 arduino-cli monitor -p /dev/cu.usbserial-XXXX -c baudrate=9600
 ```
+
+To build a *different* branch without disturbing the working tree, extract it and compile that path:
+
+```bash
+mkdir -p /tmp/smart-robot-car
+git archive <branch> '*.ino' '*.h' '*.cpp' | tar -x -C /tmp/smart-robot-car
+arduino-cli compile --fqbn arduino:avr:uno /tmp/smart-robot-car
+```
+
+The staging directory has to be named after whatever the `.ino` is called *on that branch*. For anything at or after the rename that is `smart-robot-car`; for a branch predating it, use `SmartRobotCarV4.0_V1_20230201` instead.
 
 Serial is 9600 baud (`ApplicationFunctionSet_Init`).
 

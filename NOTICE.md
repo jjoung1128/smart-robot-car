@@ -12,7 +12,7 @@ Not legal advice. If the answer matters to you commercially, ask a lawyer.
 
 | Component | Files | Copyright | License |
 | --- | --- | --- | --- |
-| Smart Robot Car V4.0 firmware | `SmartRobotCarV4.0_V1_20230201.ino`, `ApplicationFunctionSet_xxx0.*`, `DeviceDriverSet_xxx0.*`, `MPU6050_getdata.*`, `README.txt`, `*.hex` | ELEGOO | None stated — see [ELEGOO's firmware](#elegoos-firmware) |
+| Smart Robot Car V4.0 firmware | `smart-robot-car.ino` (ELEGOO's `SmartRobotCarV4.0_V1_20230201.ino`, renamed), `ApplicationFunctionSet_xxx0.*`, `DeviceDriverSet_xxx0.*`, `MPU6050_getdata.*`, `README.txt`, `*.hex` | ELEGOO | None stated — see [ELEGOO's firmware](#elegoos-firmware) |
 | ArduinoJson 6.11.1 | `ArduinoJson-v6.11.1.h` | Benoît Blanchon, 2014–2019 | MIT (notice retained inline in the header) |
 | I2Cdevlib (I2Cdev + MPU6050) | `I2Cdev.*`, `MPU6050.*` | Jeff Rowberg, 2013 | MIT — [`licenses/I2Cdevlib-MIT.txt`](licenses/I2Cdevlib-MIT.txt) |
 | IRremote 0.1 | `IRremote.*`, `IRremoteInt.h`, `addLibrary/IRremote.zip` | Ken Shirriff, 2009, and contributors | LGPL 2.1 — [`licenses/IRremote-LGPL-2.1.txt`](licenses/IRremote-LGPL-2.1.txt) |

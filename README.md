@@ -67,19 +67,22 @@ vendored in the repo root.
 
 ### Compile and upload
 
-The Arduino toolchain requires the sketch folder to be named after its `.ino`
-file. This repo's folder isn't, so `arduino-cli compile .` fails with `main file
-missing from sketch`. Pointing arduino-cli at the `.ino` directly does **not**
-help — it resolves back to the parent folder and fails identically. Build from a
-copy in a correctly named directory:
+From the repo root:
 
 ```bash
-BUILD=/tmp/SmartRobotCarV4.0_V1_20230201     # folder name must match the .ino
-mkdir -p "$BUILD" && cp *.ino *.h *.cpp "$BUILD"/
-
-arduino-cli compile --fqbn arduino:avr:uno "$BUILD"
-arduino-cli upload  --fqbn arduino:avr:uno -p PORT "$BUILD"
+arduino-cli compile --fqbn arduino:avr:uno .
+arduino-cli upload  --fqbn arduino:avr:uno -p PORT .
 ```
+
+> **Don't rename `smart-robot-car.ino`.** The Arduino toolchain requires a sketch
+> folder to contain an `.ino` matching the folder's own name, so the entry point
+> is named after this directory on purpose. Rename either one and the build fails
+> with `main file missing from sketch` — and pointing arduino-cli at the `.ino`
+> directly doesn't help, because it resolves back to the parent folder and fails
+> the same way. If you clone into a differently named directory, rename the
+> `.ino` to match it. (ELEGOO ships this file as
+> `SmartRobotCarV4.0_V1_20230201.ino`; the rename is the only difference, and the
+> compiled output is byte-identical.)
 
 Find `PORT` with `arduino-cli board list`. On macOS it is typically
 `/dev/cu.usbserial-XXXX` or `/dev/cu.usbmodemXXXX`; on Linux `/dev/ttyUSB0`; on
@@ -190,7 +193,7 @@ Car.pdf" documents it and is not in this repo.
 ## Repo layout
 
 ```
-SmartRobotCarV4.0_V1_20230201.ino   sketch entry point
+smart-robot-car.ino                 sketch entry point (must match the folder name)
 DeviceDriverSet_xxx0.{h,cpp}        one class per peripheral; all pin #defines
 ApplicationFunctionSet_xxx0.{h,cpp} behavior, mode state machine, serial protocol
 MPU6050_getdata.{h,cpp}             yaw-only wrapper over the MPU6050 driver
