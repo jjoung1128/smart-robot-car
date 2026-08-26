@@ -156,8 +156,8 @@ static void ApplicationFunctionSet_SmartRobotCarLinearMotionControl(SmartRobotCa
   static unsigned long is_time;
   if (en != directionRecord || millis() - is_time > 10)
   {
-    AppMotor.DeviceDriverSet_Motor_control(/*direction_A*/ direction_void, /*speed_A*/ 0,
-                                           /*direction_B*/ direction_void, /*speed_B*/ 0, /*controlED*/ control_enable); //Motor control
+    AppMotor.DeviceDriverSet_Motor_control(/*direction_A*/ direction_just, /*speed_A*/ 0,
+                                           /*direction_B*/ direction_just, /*speed_B*/ 0, /*controlED*/ control_enable); //Motor control
     AppMPU6050getdata.MPU6050_dveGetEulerAngles(&Yaw);
     is_time = millis();
   }
@@ -307,8 +307,8 @@ static void ApplicationFunctionSet_SmartRobotCarMotionControl(SmartRobotCarMotio
   case /* constant-expression */ stop_it:
     /* code */
     directionRecord = 9;
-    AppMotor.DeviceDriverSet_Motor_control(/*direction_A*/ direction_void, /*speed_A*/ 0,
-                                           /*direction_B*/ direction_void, /*speed_B*/ 0, /*controlED*/ control_enable); //Motor control
+    AppMotor.DeviceDriverSet_Motor_control(/*direction_A*/ direction_just, /*speed_A*/ 0,
+                                           /*direction_B*/ direction_just, /*speed_B*/ 0, /*controlED*/ control_enable); //Motor control
 
     break;
   default:
@@ -974,16 +974,17 @@ void ApplicationFunctionSet::CMD_MotorControl_xxx0(uint8_t is_MotorSelection, ui
       case 1:
       {
         is_MotorSpeed_A = is_MotorSpeed;
+        is_MotorSpeed_B = 0; //B is not selected: hold it stopped
         if (1 == is_MotorDirection)
         { //turn forward
           AppMotor.DeviceDriverSet_Motor_control(/*direction_A*/ direction_just, /*speed_A*/ is_MotorSpeed_A,
-                                                 /*direction_B*/ direction_void, /*speed_B*/ is_MotorSpeed_B,
+                                                 /*direction_B*/ direction_just, /*speed_B*/ is_MotorSpeed_B,
                                                  /*controlED*/ control_enable); //Motor control
         }
         else if (2 == is_MotorDirection)
         { //turn backward
           AppMotor.DeviceDriverSet_Motor_control(/*direction_A*/ direction_back, /*speed_A*/ is_MotorSpeed_A,
-                                                 /*direction_B*/ direction_void, /*speed_B*/ is_MotorSpeed_B,
+                                                 /*direction_B*/ direction_just, /*speed_B*/ is_MotorSpeed_B,
                                                  /*controlED*/ control_enable); //Motor control
         }
         else
@@ -995,15 +996,16 @@ void ApplicationFunctionSet::CMD_MotorControl_xxx0(uint8_t is_MotorSelection, ui
       case 2:
       {
         is_MotorSpeed_B = is_MotorSpeed;
+        is_MotorSpeed_A = 0; //A is not selected: hold it stopped
         if (1 == is_MotorDirection)
         { //turn forward
-          AppMotor.DeviceDriverSet_Motor_control(/*direction_A*/ direction_void, /*speed_A*/ is_MotorSpeed_A,
+          AppMotor.DeviceDriverSet_Motor_control(/*direction_A*/ direction_just, /*speed_A*/ is_MotorSpeed_A,
                                                  /*direction_B*/ direction_just, /*speed_B*/ is_MotorSpeed_B,
                                                  /*controlED*/ control_enable); //Motor control
         }
         else if (2 == is_MotorDirection)
         { //turn backward
-          AppMotor.DeviceDriverSet_Motor_control(/*direction_A*/ direction_void, /*speed_A*/ is_MotorSpeed_A,
+          AppMotor.DeviceDriverSet_Motor_control(/*direction_A*/ direction_just, /*speed_A*/ is_MotorSpeed_A,
                                                  /*direction_B*/ direction_back, /*speed_B*/ is_MotorSpeed_B,
                                                  /*controlED*/ control_enable); //Motor control
         }
@@ -1069,16 +1071,17 @@ void ApplicationFunctionSet::CMD_MotorControl_xxx0(void)
       case 1:
       {
         is_MotorSpeed_A = CMD_is_MotorSpeed;
+        is_MotorSpeed_B = 0; //B is not selected: hold it stopped
         if (1 == CMD_is_MotorDirection)
         { //turn forward
           AppMotor.DeviceDriverSet_Motor_control(/*direction_A*/ direction_just, /*speed_A*/ is_MotorSpeed_A,
-                                                 /*direction_B*/ direction_void, /*speed_B*/ is_MotorSpeed_B,
+                                                 /*direction_B*/ direction_just, /*speed_B*/ is_MotorSpeed_B,
                                                  /*controlED*/ control_enable); //Motor control
         }
         else if (2 == CMD_is_MotorDirection)
         { //turn backward
           AppMotor.DeviceDriverSet_Motor_control(/*direction_A*/ direction_back, /*speed_A*/ is_MotorSpeed_A,
-                                                 /*direction_B*/ direction_void, /*speed_B*/ is_MotorSpeed_B,
+                                                 /*direction_B*/ direction_just, /*speed_B*/ is_MotorSpeed_B,
                                                  /*controlED*/ control_enable); //Motor control
         }
         else
@@ -1090,15 +1093,16 @@ void ApplicationFunctionSet::CMD_MotorControl_xxx0(void)
       case 2:
       {
         is_MotorSpeed_B = CMD_is_MotorSpeed;
+        is_MotorSpeed_A = 0; //A is not selected: hold it stopped
         if (1 == CMD_is_MotorDirection)
         { //turn forward
-          AppMotor.DeviceDriverSet_Motor_control(/*direction_A*/ direction_void, /*speed_A*/ is_MotorSpeed_A,
+          AppMotor.DeviceDriverSet_Motor_control(/*direction_A*/ direction_just, /*speed_A*/ is_MotorSpeed_A,
                                                  /*direction_B*/ direction_just, /*speed_B*/ is_MotorSpeed_B,
                                                  /*controlED*/ control_enable); //Motor control
         }
         else if (2 == CMD_is_MotorDirection)
         { //turn backward
-          AppMotor.DeviceDriverSet_Motor_control(/*direction_A*/ direction_void, /*speed_A*/ is_MotorSpeed_A,
+          AppMotor.DeviceDriverSet_Motor_control(/*direction_A*/ direction_just, /*speed_A*/ is_MotorSpeed_A,
                                                  /*direction_B*/ direction_back, /*speed_B*/ is_MotorSpeed_B,
                                                  /*controlED*/ control_enable); //Motor control
         }

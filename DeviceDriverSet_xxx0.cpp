@@ -226,10 +226,6 @@ void DeviceDriverSet_Motor::DeviceDriverSet_Motor_control(boolean direction_A, u
         digitalWrite(PIN_Motor_AIN_1, LOW);
         analogWrite(PIN_Motor_PWMA, speed_A);
         break;
-      case direction_void:
-        analogWrite(PIN_Motor_PWMA, 0);
-        digitalWrite(PIN_Motor_STBY, LOW);
-        break;
       default:
         analogWrite(PIN_Motor_PWMA, 0);
         digitalWrite(PIN_Motor_STBY, LOW);
@@ -248,10 +244,6 @@ void DeviceDriverSet_Motor::DeviceDriverSet_Motor_control(boolean direction_A, u
       case direction_back:
         digitalWrite(PIN_Motor_BIN_1, LOW);
         analogWrite(PIN_Motor_PWMB, speed_B);
-        break;
-      case direction_void:
-        analogWrite(PIN_Motor_PWMB, 0);
-        digitalWrite(PIN_Motor_STBY, LOW);
         break;
       default:
         analogWrite(PIN_Motor_PWMB, 0);
